@@ -1,0 +1,109 @@
+﻿@model List<StationEasyPrice.Models.StationData>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Data</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCr_73nlHeBDw3QXunyCtIR_jJNrE6lgn0"></script>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Station Data Map</h1>
+
+    <!-- Google Map -->
+    <div id="map"></div>
+
+    <!-- Station Data Table -->
+    <h2>Station Data</h2>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>STATION_ID</th>
+                <th>SITE_NAME</th>
+                <th>STATE</th>
+                <th>CITY</th>
+                <th>ADDRESS</th>
+                <th>CLUSTER_MEDIAN_PRICE</th>
+                <th>CLIENT_MARKET_PRICE</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var station in Model)
+            {
+                <tr>
+                    <td>@station.STATION_ID</td>
+                    <td>@station.SITE_NAME</td>
+                    <td>@station.STATE</td>
+                    <td>@station.CITY</td>
+                    <td>@station.ADDRESS</td>
+                    <td>@station.CLUSTER_MEDIAN_PRICE</td>
+                    <td>@station.CLIENT_MARKET_PRICE</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <!-- Chart -->
+    <h2>Price Chart</h2>
+    <div id="priceChart" style="height: 400px;"></div>
+
+    <script>
+        // Initialize Google Map
+        var map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: @Model[0].LATITUDE, lng: @Model[0].LONGITUDE },
+            zoom: 10
+        });
+
+        // Place markers on the map
+        @foreach (var station in Model)
+        {
+            <text>
+                    new google.maps.Marker({
+                        position: { lat: @station.LATITUDE, lng: @station.LONGITUDE },
+                        map: map,
+                        title: '@station.SITE_NAME'
+                    });
+            </text>
+        }
+
+        // Initialize Highcharts for the price comparison chart
+        Highcharts.chart('priceChart', {
+            title: { text: 'Price Comparison' },
+            xAxis: {
+                categories: @Html.Raw(Json.Serialize(Model.Select(s => s.SITE_NAME).ToList()))
+            },
+            yAxis: {
+                title: { text: 'Price' }
+            },
+            series: [{
+                name: 'Cluster Median Price',
+                data: @Html.Raw(Json.Serialize(Model.Select(s => s.CLUSTER_MEDIAN_PRICE).ToList()))
+            }, {
+                name: 'Client Market Price',
+                data: @Html.Raw(Json.Serialize(Model.Select(s => s.CLIENT_MARKET_PRICE).ToList()))
+            }]
+        });
+    </script>
+</body>
+</html>
